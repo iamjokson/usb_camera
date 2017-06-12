@@ -1,0 +1,12 @@
+#ifndef __CAMERA__
+#define __CAMERA__
+
+int init_camera(int width, int height, char *dev);
+int start_cap_mjpg(unsigned char* buf);
+void stop_cap_mjpg();
+void uninit_camera();
+int getframe();
+int getfps();
+int set_backlight_compensation(int compensation);
+int get_backlight_compensation();
+#endif

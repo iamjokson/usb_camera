@@ -1,0 +1,55 @@
+//#include <iostream>
+#include <stdio.h>
+#include <time.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <errno.h>
+//#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include "usb_camera.h"
+
+int main(void)
+{
+    char location[100];
+    unsigned char buffer[3000*1024];
+    unsigned int camSize;
+    unsigned int num = 0;
+    FILE* fp;
+    unsigned int nbytes;
+
+    if(init_camera(320,240, "/dev/video3") < 0){
+      printf("init camera failed\n");
+      return -1;
+    }
+    start_cap_mjpg(buffer);
+    while(1){
+        /*获取JPEG数据*/
+        usleep(60000);
+        camSize = getframe();
+        printf("getframe %u\n", camSize);
+        if(camSize <= 0)
+            continue;
+        /*生成JPEG存储位置*/
+        if(num > 1000)
+            num = 0;
+        sprintf(location, "/data/cam3/%u_cam.jpg",++num);
+        /*写入文件*/
+        fp = fopen(location, "w+");
+        if(fp == NULL){
+            printf("open %s failed,%s\n", location, strerror(errno));
+                continue;
+        }
+        if((nbytes = fwrite(buffer, 1, camSize, fp) )!= camSize){
+            fclose(fp);
+            printf("write %s %u bytes,error:%s\n", location, nbytes, strerror(errno));
+             continue;
+        }
+        fclose(fp);
+    }
+    stop_cap_mjpg();
+    uninit_camera();
+    return 0;
+}
